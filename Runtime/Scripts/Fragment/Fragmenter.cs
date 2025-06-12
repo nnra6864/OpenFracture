@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using NUnit.Framework;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -155,13 +156,15 @@ public static class Fragmenter
     /// <param name="fragmentTemplate">The template GameObject that each slice will clone</param>
     /// <param name="parent">The parent transform for the fragment objects</param>
     /// <returns></returns>
-    public static void Slice(GameObject sourceObject,
+    public static List<GameObject> Slice(GameObject sourceObject,
                              Vector3 sliceNormal,
                              Vector3 sliceOrigin,
                              SliceOptions options,
                              GameObject fragmentTemplate,
                              Transform parent)
     {
+        List<GameObject> fragments = new();
+        
         // Define our source mesh data for the fracturing
         FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
         // Subdivide the mesh into multiple fragments until we reach the fragment limit
@@ -177,23 +180,25 @@ public static class Fragmenter
                          out bottomSlice);
 
         int i = 0;
-        CreateFragment(topSlice,
+        fragments.AddRange(CreateFragment(topSlice,
                        sourceObject,
                        fragmentTemplate,
                        parent,
                        false,
                        "",
                        options.detectFloatingFragments,
-                       ref i);
+                       ref i));
 
-        CreateFragment(bottomSlice,
+        fragments.AddRange(CreateFragment(bottomSlice,
                        sourceObject,
                        fragmentTemplate,
                        parent,
                        false,
                        "",
                        options.detectFloatingFragments,
-                       ref i);
+                       ref i));
+
+        return fragments;
     }
 
     /// <summary>
@@ -204,7 +209,7 @@ public static class Fragmenter
     /// <param name="fragmentTemplate">The template GameObject that each fragment will clone</param>
     /// <param name="parent">The parent transform for the fragment objects</param>
     /// <param name="i">Fragment counter</param>
-    private static void CreateFragment(FragmentData fragmentMeshData,
+    private static List<GameObject> CreateFragment(FragmentData fragmentMeshData,
                                        GameObject sourceObject,
                                        GameObject fragmentTemplate,
                                        Transform parent,
@@ -213,10 +218,12 @@ public static class Fragmenter
                                        bool detectFloatingFragments,
                                        ref int i)
     {
+        List<GameObject> fragments = new();
+        
         // If there is no mesh data, don't create an object
         if (fragmentMeshData.Triangles.Length == 0)
         {
-            return;
+            return fragments;
         }
 
         Mesh[] meshes;
@@ -244,6 +251,7 @@ public static class Fragmenter
             fragment.transform.localPosition = Vector3.zero;
             fragment.transform.localRotation = Quaternion.identity;
             fragment.transform.localScale = sourceObject.transform.localScale;
+            fragments.Add(fragment);
 
             meshes[k].name = System.Guid.NewGuid().ToString();
 
@@ -277,5 +285,7 @@ public static class Fragmenter
 
             i++;
         }
+
+        return fragments;
     }
 }

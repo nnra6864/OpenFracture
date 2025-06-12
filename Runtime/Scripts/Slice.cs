@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -24,49 +25,46 @@ public class Slice : MonoBehaviour
     /// </summary>
     /// <param name="sliceNormalWorld">The cut plane normal vector in world coordinates.</param>
     /// <param name="sliceOriginWorld">The cut plane origin in world coordinates.</param>
-    public void ComputeSlice(Vector3 sliceNormalWorld, Vector3 sliceOriginWorld)
+    public List<GameObject> ComputeSlice(Vector3 sliceNormalWorld, Vector3 sliceOriginWorld)
     {
-        var mesh = this.GetComponent<MeshFilter>().sharedMesh;
-
-        if (mesh != null)
+        var mesh = GetComponent<MeshFilter>().sharedMesh;
+        if (!mesh) return null;
+        
+        // If the fragment root object has not yet been created, create it now
+        if (!fragmentRoot)
         {
-            // If the fragment root object has not yet been created, create it now
-            if (this.fragmentRoot == null)
-            {
-                // Create a game object to contain the fragments
-                this.fragmentRoot = new GameObject($"{this.name}Slices");
-                this.fragmentRoot.transform.SetParent(this.transform.parent);
+            // Create a game object to contain the fragments
+            fragmentRoot = new($"{name}Slices");
+            fragmentRoot.transform.SetParent(transform.parent);
 
-                // Each fragment will handle its own scale
-                this.fragmentRoot.transform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
-                this.fragmentRoot.transform.localScale = Vector3.one;
-            }
-            
-            var sliceTemplate = CreateSliceTemplate();
-            var sliceNormalLocal = this.transform.InverseTransformDirection(sliceNormalWorld);
-            var sliceOriginLocal = this.transform.InverseTransformPoint(sliceOriginWorld);
-
-            Fragmenter.Slice(this.gameObject,
-                             sliceNormalLocal,
-                             sliceOriginLocal,
-                             this.sliceOptions,
-                             sliceTemplate,
-                             this.fragmentRoot.transform);
-                    
-            // Done with template, destroy it
-            GameObject.Destroy(sliceTemplate);
-
-            // Deactivate the original object
-            this.gameObject.SetActive(false);
-
-            // Fire the completion callback
-            if (callbackOptions.onCompleted != null)
-            {
-                callbackOptions.onCompleted.Invoke();
-            }
+            // Each fragment will handle its own scale
+            fragmentRoot.transform.SetPositionAndRotation(transform.position, transform.rotation);
+            fragmentRoot.transform.localScale = Vector3.one;
         }
+
+        var sliceTemplate = CreateSliceTemplate();
+        var sliceNormalLocal = transform.InverseTransformDirection(sliceNormalWorld);
+        var sliceOriginLocal = transform.InverseTransformPoint(sliceOriginWorld);
+
+        var fragments = Fragmenter.Slice(gameObject,
+                         sliceNormalLocal,
+                         sliceOriginLocal,
+                         sliceOptions,
+                         sliceTemplate,
+                         fragmentRoot.transform);
+
+        // Done with template, destroy it
+        Destroy(sliceTemplate);
+
+        // Deactivate the original object
+        gameObject.SetActive(false);
+
+        // Fire the completion callback
+        callbackOptions.onCompleted?.Invoke();
+
+        return fragments;
     }
-    
+
     /// <summary>
     /// Creates a template object which each fragment will derive from
     /// </summary>
@@ -77,7 +75,7 @@ public class Slice : MonoBehaviour
         // Otherwise, parent to this object's parent
         GameObject obj = new GameObject();
         obj.name = "Slice";
-        obj.tag = this.tag;
+        obj.tag = tag;
 
         // Update mesh to the new sliced mesh
         obj.AddComponent<MeshFilter>();
@@ -85,19 +83,19 @@ public class Slice : MonoBehaviour
         // Add materials. Normal material goes in slot 1, cut material in slot 2
         var meshRenderer = obj.AddComponent<MeshRenderer>();
         meshRenderer.sharedMaterials = new Material[2] {
-            this.GetComponent<MeshRenderer>().sharedMaterial,
-            this.sliceOptions.insideMaterial
+            GetComponent<MeshRenderer>().sharedMaterial,
+            sliceOptions.insideMaterial
         };
 
         // Copy collider properties to fragment
-        var thisCollider = this.GetComponent<Collider>();
+        var thisCollider = GetComponent<Collider>();
         var fragmentCollider = obj.AddComponent<MeshCollider>();
         fragmentCollider.convex = true;
         fragmentCollider.sharedMaterial = thisCollider.sharedMaterial;
         fragmentCollider.isTrigger = thisCollider.isTrigger;
         
         // Copy rigid body properties to fragment
-        var thisRigidBody = this.GetComponent<Rigidbody>();
+        var thisRigidBody = GetComponent<Rigidbody>();
         var fragmentRigidBody = obj.AddComponent<Rigidbody>();
         fragmentRigidBody.linearVelocity = thisRigidBody.linearVelocity;
         fragmentRigidBody.angularVelocity = thisRigidBody.angularVelocity;
@@ -106,8 +104,8 @@ public class Slice : MonoBehaviour
         fragmentRigidBody.useGravity = thisRigidBody.useGravity;
     
         // If refracturing is enabled, create a copy of this component and add it to the template fragment object
-        if (this.sliceOptions.enableReslicing &&
-           (this.currentSliceCount < this.sliceOptions.maxResliceCount))
+        if (sliceOptions.enableReslicing &&
+           (currentSliceCount < sliceOptions.maxResliceCount))
         {
             CopySliceComponent(obj);
         }
@@ -123,9 +121,9 @@ public class Slice : MonoBehaviour
     {
         var sliceComponent = obj.AddComponent<Slice>();
 
-        sliceComponent.sliceOptions = this.sliceOptions;
-        sliceComponent.callbackOptions = this.callbackOptions;
-        sliceComponent.currentSliceCount = this.currentSliceCount + 1;
-        sliceComponent.fragmentRoot = this.fragmentRoot;
+        sliceComponent.sliceOptions = sliceOptions;
+        sliceComponent.callbackOptions = callbackOptions;
+        sliceComponent.currentSliceCount = currentSliceCount + 1;
+        sliceComponent.fragmentRoot = fragmentRoot;
     }
 }
