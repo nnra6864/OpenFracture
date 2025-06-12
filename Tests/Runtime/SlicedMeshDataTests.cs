@@ -87,9 +87,10 @@ public class FragmentDataTests
         for (int i = 0; i < vertexCount; i++)
         {
             meshData.AddCutFaceVertex(
-                new Vector3(i + 1, i + 2, i + 3), 
-                new Vector3(i + 4, i + 5, i + 6),
-                new Vector2(i + 7, i + 8)
+                new(i         + 1, i  + 2, i + 3),
+                new(i         + 4, i  + 5, i + 6),
+                new Vector3(i + 7, i  + 8, i + 9),
+                new(i         + 10, i + 11)
             );
         }
 
@@ -194,7 +195,8 @@ public class FragmentDataTests
         for (int i = 0; i < vertexCount; i++)
         {
             meshData.AddCutFaceVertex(
-                new Vector3(i + 1, i + 2, i + 3), 
+                new(i + 1, i + 2, i + 3),
+                Vector3.zero,
                 Vector3.zero,
                 Vector2.zero
             );
@@ -218,7 +220,8 @@ public class FragmentDataTests
         for (int i = 0; i < vertexCount; i++)
         {
             meshData.AddCutFaceVertex(
-                new Vector3(i + 1, i + 2, i + 3), 
+                new Vector3(i + 1, i + 2, i + 3),
+                Vector3.zero, 
                 Vector3.zero,
                 Vector2.zero
             );
@@ -246,6 +249,7 @@ public class FragmentDataTests
         {
             meshData.AddCutFaceVertex(
                 new Vector3(i + 1, i + 2, i + 3), 
+                Vector3.zero, 
                 Vector3.zero,
                 Vector2.zero
             );
@@ -281,6 +285,7 @@ public class FragmentDataTests
         {
             meshData.AddCutFaceVertex(
                 new Vector3(i + 1, i + 2, i + 3), 
+                Vector3.zero, 
                 Vector3.zero,
                 Vector2.zero
             );
@@ -316,6 +321,7 @@ public class FragmentDataTests
         {
             meshData.AddCutFaceVertex(
                 new Vector3(i + 1, i + 2, i + 3), 
+                Vector3.zero, 
                 Vector3.zero,
                 Vector2.zero
             );
@@ -356,7 +362,7 @@ public class FragmentDataTests
         
         for (int i = 0; i < cutVertexCount; i++)
         {
-            meshData.AddCutFaceVertex(Vector3.zero, Vector3.zero, Vector2.zero);
+            meshData.AddCutFaceVertex(Vector3.zero, Vector3.zero, Vector3.zero, Vector2.zero);
         }
 
         for (int i = 0; i < triangleCount1; i++)
