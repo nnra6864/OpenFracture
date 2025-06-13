@@ -8,7 +8,11 @@ OpenFracture is an open source Unity package for fracturing & slicing meshes. Th
 
 ### Unity Package Manager
 
-OpenFracture can be imported using Unity’s built-in Package Manager. Follow the instructions [here](https://docs.unity3d.com/Manual/upm-ui-giturl.html)
+OpenFracture can be imported using Unity’s built-in Package Manager.
+
+```
+https://github.com/nnra6864/OpenFracture.git
+```
 
 ### Import into Unity Project
 
@@ -21,6 +25,7 @@ Here is a [link](/Documentation~/GettingStarted.md) to the documentation.
 ## Features
 
 ### Fracturing
+
 - **Runtime and Editor Support** - Fracture meshes either run-time or pre-fracture in the editor for optimal performance.
 - **Arbitary Mesh Geometry** - Support for convex and non-convex meshes as well as meshes with multiple holes. **Note: Meshes must be closed and cannot have self-intersecting geometry**
 - **2D/3D Fracturing** - Ability to specify which planes the mesh will be fractured in. This is useful when a mesh is effectively 2D (e.g. glass) and only needs to be fractured on two planes.
@@ -34,6 +39,7 @@ Here is a [link](/Documentation~/GettingStarted.md) to the documentation.
 - **OnCompletion Callback** - Trigger any behavior after the fracturing is complete, such as playing an AudioSource or executing other in-game logic.
 
 ### Slicing
+
 - **Runtime Slicing** - Slice objects at runtime
 - **Recursive Slicing** - Slice objects multiple times and slice the fragments into smaller pieces
 - **Detect Floating Fragments** - Detects if multiple, isolated fragments are created when slicing non-convex meshes and treats each fragment as a separate mesh.
@@ -73,7 +79,7 @@ The first step in slicing is splitting the existing mesh data into two separate 
 
 #### Filling in the Cut Face
 
-Now that the original mesh data has been divided in two and the geometry intersected by the slice plane has been properly handled, the polygon produced by the intersection of the cut plane and the mesh must be filled in. The total set of lines produced by Step 5 of the previous phase define the border constraints for the new face. These constraints and the vertices of the polygon are fed into a constrained Delauney triangulation algorithm (see Reference [1] for more details). 
+Now that the original mesh data has been divided in two and the geometry intersected by the slice plane has been properly handled, the polygon produced by the intersection of the cut plane and the mesh must be filled in. The total set of lines produced by Step 5 of the previous phase define the border constraints for the new face. These constraints and the vertices of the polygon are fed into a constrained Delauney triangulation algorithm (see Reference [1] for more details).
 
 ### Fracturing
 
@@ -94,4 +100,3 @@ Many of the core functions have unit tests written. These can be helpful if you 
 [2] Lawson, Charles L. "Software for C1 surface interpolation." Mathematical software. Academic Press, 1977. 161-194.
 
 [3] Cline, A. K., and R. L. Renka. "A storage-efficient method for construction of a Thiessen triangulation." The Rocky Mountain Journal of Mathematics (1984): 119-139.
-
