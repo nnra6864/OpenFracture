@@ -79,8 +79,8 @@ public class Fracture : MonoBehaviour
 
                 // Object is unfrozen if the colliding object has the correct tag (if tag filtering is enabled)
                 // and the collision force exceeds the minimum collision force.
-                 if (collisionForce > triggerOptions.minimumCollisionForce &&
-                   (!triggerOptions.filterCollisionsByTag || (triggerOptions.filterCollisionsByTag && tagAllowed)))
+                if (collisionForce > triggerOptions.minimumCollisionForce &&
+                  (!triggerOptions.filterCollisionsByTag || (triggerOptions.filterCollisionsByTag && tagAllowed)))
                 {
                     callbackOptions.CallOnFracture(contact.otherCollider, gameObject, contact.point);
                     this.ComputeFracture();
@@ -120,77 +120,78 @@ public class Fracture : MonoBehaviour
     /// Compute the fracture and create the fragments
     /// </summary>
     /// <returns></returns>
-    private void ComputeFracture()
+    public List<GameObject> ComputeFracture()
     {
+        List<GameObject> fragments = new();
         var mesh = this.GetComponent<MeshFilter>().sharedMesh;
 
-        if (mesh != null)
+        if (!mesh) return fragments;
+
+        // If the fragment root object has not yet been created, create it now
+        if (this.fragmentRoot == null)
         {
-            // If the fragment root object has not yet been created, create it now
-            if (this.fragmentRoot == null)
-            {
-                // Create a game object to contain the fragments
-                this.fragmentRoot = new GameObject($"{this.name}Fragments");
-                this.fragmentRoot.transform.SetParent(this.transform.parent);
+            // Create a game object to contain the fragments
+            this.fragmentRoot = new GameObject($"{this.name}Fragments");
+            this.fragmentRoot.transform.SetParent(this.transform.parent);
 
-                // Each fragment will handle its own scale
-                this.fragmentRoot.transform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
-                this.fragmentRoot.transform.localScale = Vector3.one;
-            }
+            // Each fragment will handle its own scale
+            this.fragmentRoot.transform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
+            this.fragmentRoot.transform.localScale = Vector3.one;
+        }
 
-            var fragmentTemplate = CreateFragmentTemplate();
+        var fragmentTemplate = CreateFragmentTemplate();
 
-            if (fractureOptions.asynchronous)
-            {
-                StartCoroutine(Fragmenter.FractureAsync(
-                    this.gameObject,
-                    this.fractureOptions,
-                    fragmentTemplate,
-                    this.fragmentRoot.transform,
-                    () =>
+        if (fractureOptions.asynchronous)
+        {
+            StartCoroutine(Fragmenter.FractureAsync(
+                this.gameObject,
+                this.fractureOptions,
+                fragmentTemplate,
+                this.fragmentRoot.transform,
+                () =>
+                {
+                    // Done with template, destroy it
+                    GameObject.Destroy(fragmentTemplate);
+
+                    // Deactivate the original object
+                    this.gameObject.SetActive(false);
+
+                    // Fire the completion callback
+                    if ((this.currentRefractureCount == 0) ||
+                        (this.currentRefractureCount > 0 && this.refractureOptions.invokeCallbacks))
                     {
-                        // Done with template, destroy it
-                        GameObject.Destroy(fragmentTemplate);
-
-                        // Deactivate the original object
-                        this.gameObject.SetActive(false);
-
-                        // Fire the completion callback
-                        if ((this.currentRefractureCount == 0) ||
-                            (this.currentRefractureCount > 0 && this.refractureOptions.invokeCallbacks))
+                        if (callbackOptions.onCompleted != null)
                         {
-                            if (callbackOptions.onCompleted != null)
-                            {
-                                callbackOptions.onCompleted.Invoke();
-                            }
+                            callbackOptions.onCompleted.Invoke();
                         }
                     }
-                ));
-            }
-            else
+                }
+            ));
+        }
+        else
+        {
+            fragments = Fragmenter.Fracture(this.gameObject,
+                                this.fractureOptions,
+                                fragmentTemplate,
+                                this.fragmentRoot.transform);
+
+            // Done with template, destroy it
+            GameObject.Destroy(fragmentTemplate);
+
+            // Deactivate the original object
+            this.gameObject.SetActive(false);
+
+            // Fire the completion callback
+            if ((this.currentRefractureCount == 0) ||
+                (this.currentRefractureCount > 0 && this.refractureOptions.invokeCallbacks))
             {
-                Fragmenter.Fracture(this.gameObject,
-                                    this.fractureOptions,
-                                    fragmentTemplate,
-                                    this.fragmentRoot.transform);
-
-                // Done with template, destroy it
-                GameObject.Destroy(fragmentTemplate);
-
-                // Deactivate the original object
-                this.gameObject.SetActive(false);
-
-                // Fire the completion callback
-                if ((this.currentRefractureCount == 0) ||
-                    (this.currentRefractureCount > 0 && this.refractureOptions.invokeCallbacks))
+                if (callbackOptions.onCompleted != null)
                 {
-                    if (callbackOptions.onCompleted != null)
-                    {
-                        callbackOptions.onCompleted.Invoke();
-                    }
+                    callbackOptions.onCompleted.Invoke();
                 }
             }
         }
+        return fragments;
     }
 
     /// <summary>

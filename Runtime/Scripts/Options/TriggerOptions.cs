@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum TriggerType 
+public enum TriggerType
 {
     Collision,
     Trigger,
-    Keyboard
+    Keyboard,
+    Manual
 }
 
 [Serializable]

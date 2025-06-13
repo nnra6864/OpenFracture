@@ -22,16 +22,18 @@ public static class Fragmenter
     /// <param name="saveToDisk">If true, the generated fragment meshes will be saved to disk so they can be re-used in prefabs.</param>
     /// <param name="saveFolderPath">The save location for the fragments.</param>
     /// <returns></returns>
-    public static void Fracture(GameObject sourceObject,
+    public static List<GameObject> Fracture(GameObject sourceObject,
                                 FractureOptions options,
                                 GameObject fragmentTemplate,
                                 Transform parent,
                                 bool saveToDisk = false,
                                 string saveFolderPath = "")
     {
+        List<GameObject> frags = new();
+
         // Define our source mesh data for the fracturing
         FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
- 
+
         // We begin by fragmenting the source mesh, then process each fragment in a FIFO queue
         // until we achieve the target fragment count.
         var fragments = new Queue<FragmentData>();
@@ -64,17 +66,19 @@ public static class Fragmenter
         }
 
         int i = 0;
-        foreach(FragmentData meshData in fragments)
+        foreach (FragmentData meshData in fragments)
         {
-            CreateFragment(meshData, 
+            frags.AddRange(CreateFragment(meshData,
                            sourceObject,
-                           fragmentTemplate, 
+                           fragmentTemplate,
                            parent,
                            saveToDisk,
                            saveFolderPath,
                            options.detectFloatingFragments,
-                           ref i);
+                           ref i));
         }
+
+        return frags;
     }
 
     /// <summary>
@@ -94,7 +98,7 @@ public static class Fragmenter
     {
         // Define our source mesh data for the fracturing
         FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
- 
+
         // We begin by fragmenting the source mesh, then process each fragment in a FIFO queue
         // until we achieve the target fragment count.
         var fragments = new Queue<FragmentData>();
@@ -130,11 +134,11 @@ public static class Fragmenter
         }
 
         int i = 0;
-        foreach(FragmentData meshData in fragments)
+        foreach (FragmentData meshData in fragments)
         {
-            CreateFragment(meshData, 
+            CreateFragment(meshData,
                            sourceObject,
-                           fragmentTemplate, 
+                           fragmentTemplate,
                            parent,
                            false,
                            "",
@@ -164,7 +168,7 @@ public static class Fragmenter
                              Transform parent)
     {
         List<GameObject> fragments = new();
-        
+
         // Define our source mesh data for the fracturing
         FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
         // Subdivide the mesh into multiple fragments until we reach the fragment limit
@@ -219,7 +223,7 @@ public static class Fragmenter
                                        ref int i)
     {
         List<GameObject> fragments = new();
-        
+
         // If there is no mesh data, don't create an object
         if (fragmentMeshData.Triangles.Length == 0)
         {
@@ -244,7 +248,7 @@ public static class Fragmenter
         var parentSize = sourceObject.GetComponent<MeshFilter>().sharedMesh.bounds.size;
         var parentMass = sourceObject.GetComponent<Rigidbody>().mass;
 
-        for(int k = 0; k < meshes.Length; k++)
+        for (int k = 0; k < meshes.Length; k++)
         {
             GameObject fragment = GameObject.Instantiate(fragmentTemplate, parent);
             fragment.name = $"Fragment{i}";
@@ -273,15 +277,15 @@ public static class Fragmenter
             var size = fragmentMesh.bounds.size;
             float density = (parentSize.x * parentSize.y * parentSize.z) / parentMass;
             rigidBody.mass = (size.x * size.y * size.z) / density;
-            
+
             // This code only compiles for the editor
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             if (saveToDisk)
             {
                 string path = $"{saveFolderPath}/{meshes[k].name}.asset";
                 AssetDatabase.CreateAsset(meshes[k], path);
             }
-            #endif
+#endif
 
             i++;
         }
